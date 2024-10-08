@@ -13,7 +13,16 @@
             <ul id="file-list"></ul>
         </div>
         <div class="editor">
-            <textarea id="chat-viewer" readonly></textarea>
+            <div id="message-list"></div>
+            <div class="message-input">
+                <select id="role-select">
+                    <option value="user">User</option>
+                    <option value="assistant">Assistant</option>
+                    <option value="system">System</option>
+                </select>
+                <input type="text" id="message-input-field" placeholder="Type your message here..." />
+                <button id="add-message">Add Message</button>
+            </div>
         </div>
     </div>
     <script src="renderer.js"></script>
