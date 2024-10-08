@@ -37,8 +37,16 @@ body {
     margin-bottom: 10px; /* Space above input area */
 }
 
-.message-input {
+.message-item {
     display: flex;
+    justify-content: space-between; /* Space between message and buttons */
+    margin-bottom: 5px; /* Space between messages */
+}
+
+.message-input {
+    width: 100%;
+    overflow: hidden;
+    resize: none; /* Prevent manual resizing */
 }
 
 .message-input select,
@@ -46,8 +54,20 @@ body {
     margin-right: 5px;
 }
 
-.message-item {
-    display: flex;
-    justify-content: space-between; /* Space between message and buttons */
-    margin-bottom: 5px; /* Space between messages */
+/* Style for buttons to ensure uniform size */
+.message-input button {
+    padding: 5px 10px;
+    min-width: 80px; /* Ensure a minimum width */
+    height: 30px; /* Uniform height */
+}
+
+/* Styles for the input field to allow for dynamic height */
+#message-input-field {
+    flex: 1; /* Takes up remaining space */
+    max-height: 240px; /* Max height for 5 lines (approx 24px per line) */
+    height: auto; /* Allow height to adjust based on content */
+    resize: none; /* Prevent manual resizing */
+    overflow-y: auto; /* Allow vertical scrolling */
+    padding: 5px; /* Padding inside the input */
+    word-wrap: break-word; /* Ensures long words wrap within the textarea */
 }

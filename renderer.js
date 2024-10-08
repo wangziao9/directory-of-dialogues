@@ -38,18 +38,39 @@ function updateMessageList() {
     chatHistory.forEach((message, index) => {
         const messageItem = document.createElement('div');
         messageItem.className = 'message-item';
-        messageItem.innerText = `[${message.role}]: ${message.content}`;
-        
+        messageItem.style.display = 'flex';
+        messageItem.style.justifyContent = 'space-between';
+        messageItem.style.alignItems = 'center';
+
+        // Create a span to hold the message text
+        const messageText = document.createElement('span');
+        messageText.innerText = `[${message.role}]: ${message.content}`;
+        messageText.style.whiteSpace = 'pre-wrap'; // Ensure long words are wrapped
+        messageText.style.wordBreak = 'break-word'; // Ensure long words are wrapped
+        messageText.style.flexGrow = '1';
+
+        // Create a container for the buttons
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '10px';
+
+        // Create Edit button
         const editButton = document.createElement('button');
         editButton.innerText = 'Edit';
         editButton.onclick = () => editMessage(index);
 
+        // Create Delete button
         const deleteButton = document.createElement('button');
         deleteButton.innerText = 'Delete';
         deleteButton.onclick = () => deleteMessage(index);
 
-        messageItem.appendChild(editButton);
-        messageItem.appendChild(deleteButton);
+        // Append buttons to the button container
+        buttonContainer.appendChild(editButton);
+        buttonContainer.appendChild(deleteButton);
+
+        // Append text and button container to the message item
+        messageItem.appendChild(messageText);
+        messageItem.appendChild(buttonContainer);
         messageList.appendChild(messageItem);
     });
 }
