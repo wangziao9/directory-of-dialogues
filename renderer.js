@@ -1,18 +1,20 @@
-const { ipcRenderer } = require('electron');
+// const { ipcRenderer } = require('electron');
 
 let chatHistory = [];
 let editingIndex = null; // To track which message is being edited
 
+const textarea = document.querySelector('.message-input textarea');
+const roleselect = document.getElementById('role-select');
+const addbutton = document.getElementById('add-button');
+
 document.getElementById('open-file').addEventListener('click', () => {
-    ipcRenderer.send('open-file-dialog');
+    window.electronAPI.send('open-file-dialog');
 });
 
-ipcRenderer.on('file-opened', (event, content) => {
+window.electronAPI.on('file-opened', (content) => {
     chatHistory = JSON.parse(content);
     updateMessageList();
 });
-
-const textarea = document.querySelector('.message-input textarea');
 
 // Adjust textarea height based on content
 textarea.addEventListener('input', function () {
@@ -21,22 +23,43 @@ textarea.addEventListener('input', function () {
 });
 
 
-document.getElementById('add-message').addEventListener('click', () => {
-    const role = document.getElementById('role-select').value;
-    const messageText = document.getElementById('message-input-field').value;
+addbutton.addEventListener('click', async () => {
+    const role = roleselect.value;
+    messageText = textarea.value;
+    console.log("Role: ", role);
+    console.log("Message: ", messageText);
 
-    if (messageText) {
-        if (editingIndex !== null) {
-            // Update the existing message
-            chatHistory[editingIndex] = { role, content: messageText };
-            editingIndex = null; // Reset the editing index
-        } else {
-            // Add a new message
-            chatHistory.push({ role, content: messageText });
-        }
-        
-        document.getElementById('message-input-field').value = ''; // Clear input
+    if (editingIndex !== null) {
+        // Update the existing message
+        chatHistory[editingIndex] = { role, content: messageText };
+        editingIndex = null; // Reset the editing index
+        addbutton.textContent = 'Add';
+        textarea.value = ''; // Clear input
         updateMessageList();
+        return;
+    }
+    if (!messageText) {
+        if (role == 'assistant') {
+            // Let ChatGPT generate a message as a 'assistant'
+            console.log("Trying to generate");
+            const response = await api.sendPrompt(chatHistory);
+            console.log("type of response: ", typeof response);
+            console.log("Response: ", response);
+            messageText = response;
+        } else {
+            alert('Please enter a message to send');
+            return;
+        }
+    }
+
+    chatHistory.push({ role, content: messageText });
+    textarea.value = ''; // Clear input
+    updateMessageList();
+
+    if (role == 'assistant' || role == 'system') {
+        roleselect.value = 'user';
+    } else {
+        roleselect.value = 'assistant';
     }
 });
 
@@ -53,7 +76,7 @@ function updateMessageList() {
 
         // Create a span to hold the message text
         const messageText = document.createElement('span');
-        messageText.innerText = `[${message.role}]: ${message.content}`;
+        messageText.innerText = `#${index} [${message.role}]: ${message.content}`;
         messageText.style.whiteSpace = 'pre-wrap'; // Ensure long words are wrapped
         messageText.style.wordBreak = 'break-word'; // Ensure long words are wrapped
         messageText.style.flexGrow = '1';
@@ -86,10 +109,11 @@ function updateMessageList() {
 
 function editMessage(index) {
     const message = chatHistory[index];
-    document.getElementById('role-select').value = message.role;
-    document.getElementById('message-input-field').value = message.content;
+    roleselect.value = message.role;
+    textarea.value = message.content;
 
     editingIndex = index; // Set the index of the message being edited
+    addbutton.textContent = 'Save #' + index;
 }
 
 function deleteMessage(index) {

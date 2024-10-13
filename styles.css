@@ -57,10 +57,12 @@ body {
     min-height: calc(1.5em * 2); /* Initial height for 2 lines */
     max-height: calc(1.5em * 10); /* Maximum height for 10 lines */
     overflow-y: auto; /* Show scroll if content exceeds max-height */
+    padding: 5px;
 }
 
 /* Optional: Adjust the select and button sizes for better alignment */
 .message-input select,
 .message-input button {
+    padding: 5px;
     height: 2.5em;
 }
