@@ -19,7 +19,7 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
-ipcMain.on('open-file-dialog', async (event) => {
+ipcMain.on('open-file-dialog', async (event) => { // must be async because dialog.showOpenDialog is a IO
     const result = await dialog.showOpenDialog({
         properties: ['openFile'],
         filters: [{ name: 'JSON Files', extensions: ['json'] }],
@@ -31,14 +31,16 @@ ipcMain.on('open-file-dialog', async (event) => {
     event.reply('file-opened', content);
 });
 
-/*
-const { Configuration, OpenAIApi } = require('openai');
-console.log(Configuration, OpenAIApi);
-const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY, // Use environment variable for security
+ipcMain.on('save-file-dialog', async (event, content) => {
+    const result = await dialog.showSaveDialog({
+        properties: ['showOverwriteConfirmation', 'showHiddenFiles'],
+        filters: [{ name: 'JSON Files', extensions: ['json'] }],
+    });
+
+    if (result.canceled) return;
+    fs.writeFileSync(result.filePath, content, 'utf-8');
+    event.reply('file-save-successful', result.filePath);
 });
-const openai = new OpenAIApi(configuration);
-*/
 
 const OpenAI = require('openai');
 const openai = new OpenAI(api_key = process.env.OPENAI_API_KEY);

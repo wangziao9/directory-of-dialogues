@@ -7,13 +7,26 @@ const textarea = document.querySelector('.message-input textarea');
 const roleselect = document.getElementById('role-select');
 const addbutton = document.getElementById('add-button');
 
+document.getElementById('clear-chat').addEventListener('click', () => {
+    chatHistory = [];
+    updateMessageList();
+});
+
 document.getElementById('open-file').addEventListener('click', () => {
     window.electronAPI.send('open-file-dialog');
-});
+}); // () => {...} is called a callback function
 
 window.electronAPI.on('file-opened', (content) => {
     chatHistory = JSON.parse(content);
     updateMessageList();
+});
+
+document.getElementById('save-file').addEventListener('click', () => {
+    window.electronAPI.send('save-file-dialog', JSON.stringify(chatHistory));
+});
+
+window.electronAPI.on('file-save-successful', (filePath) => {
+    alert('Current chat successfully saved to ' + filePath);
 });
 
 // Adjust textarea height based on content
@@ -35,6 +48,7 @@ addbutton.addEventListener('click', async () => {
         editingIndex = null; // Reset the editing index
         addbutton.textContent = 'Add';
         textarea.value = ''; // Clear input
+        textarea.style.height = 'auto'; // Reset the height
         updateMessageList();
         return;
     }
@@ -54,6 +68,7 @@ addbutton.addEventListener('click', async () => {
 
     chatHistory.push({ role, content: messageText });
     textarea.value = ''; // Clear input
+    textarea.style.height = 'auto'; // Reset the height
     updateMessageList();
 
     if (role == 'assistant' || role == 'system') {
@@ -73,6 +88,8 @@ function updateMessageList() {
         messageItem.style.display = 'flex';
         messageItem.style.justifyContent = 'space-between';
         messageItem.style.alignItems = 'center';
+        messageItem.style.paddingTop = '10px';
+        messageItem.style.paddingBottom = '10px';
 
         // Create a span to hold the message text
         const messageText = document.createElement('span');

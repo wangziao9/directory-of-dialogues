@@ -24,6 +24,11 @@ body {
     height: 100%; /* Ensures sidebar takes full height */
 }
 
+.sidebar button {
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
 .editor {
     flex: 1; /* Takes up remaining space */
     padding: 10px;
