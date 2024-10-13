@@ -44,30 +44,23 @@ body {
 }
 
 .message-input {
-    width: 100%;
-    overflow: hidden;
-    resize: none; /* Prevent manual resizing */
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Optional spacing between elements */
+    width: 100%; /* Ensure it takes the full width of its parent */
 }
 
+/* Make the textarea grow to take up the available space */
+.message-input textarea {
+    flex-grow: 1; /* Fill remaining space */
+    resize: none; /* Disable manual resize (only grow programmatically) */
+    min-height: calc(1.5em * 2); /* Initial height for 2 lines */
+    max-height: calc(1.5em * 10); /* Maximum height for 10 lines */
+    overflow-y: auto; /* Show scroll if content exceeds max-height */
+}
+
+/* Optional: Adjust the select and button sizes for better alignment */
 .message-input select,
-.message-input input {
-    margin-right: 5px;
-}
-
-/* Style for buttons to ensure uniform size */
 .message-input button {
-    padding: 5px 10px;
-    min-width: 80px; /* Ensure a minimum width */
-    height: 30px; /* Uniform height */
-}
-
-/* Styles for the input field to allow for dynamic height */
-#message-input-field {
-    flex: 1; /* Takes up remaining space */
-    max-height: 240px; /* Max height for 5 lines (approx 24px per line) */
-    height: auto; /* Allow height to adjust based on content */
-    resize: none; /* Prevent manual resizing */
-    overflow-y: auto; /* Allow vertical scrolling */
-    padding: 5px; /* Padding inside the input */
-    word-wrap: break-word; /* Ensures long words wrap within the textarea */
+    height: 2.5em;
 }

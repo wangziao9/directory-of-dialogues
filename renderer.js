@@ -12,6 +12,15 @@ ipcRenderer.on('file-opened', (event, content) => {
     updateMessageList();
 });
 
+const textarea = document.querySelector('.message-input textarea');
+
+// Adjust textarea height based on content
+textarea.addEventListener('input', function () {
+    this.style.height = 'auto'; // Reset the height
+    this.style.height = Math.min(this.scrollHeight, 10 * 1.5 * 16) + 'px'; // Limit to 10 lines
+});
+
+
 document.getElementById('add-message').addEventListener('click', () => {
     const role = document.getElementById('role-select').value;
     const messageText = document.getElementById('message-input-field').value;
