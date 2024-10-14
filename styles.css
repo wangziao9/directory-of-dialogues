@@ -17,20 +17,45 @@ body {
 }
 
 .sidebar {
-    width: 200px;
+    flex: 1;
+    min-width: 200px;
     background-color: #f0f0f0;
     padding: 10px;
     border-right: 1px solid #ccc;
-    height: 100%; /* Ensures sidebar takes full height */
+    height: 100%;
+    /* for things in the sidebar */
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar button {
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 5px;
+    margin-bottom: 5px;
+}
+
+#dir-content {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    /*background-color:azure;*/
+    overflow-x: auto;
+    overflow-y: auto;
+    flex-grow: 1;
+    height: 100%; /* Ensure it does not grow beyond the container */
+}
+
+ul {
+    list-style-type: square; /* Or square, circle, etc. */
+    padding-left: 20px;    /* Indent nested lists */
+    margin: 0;             /* Ensure margin does not reset */
+}
+
+ul ul {
+    list-style-type: circle; /* Different style for nested lists */
+    padding-left: 20px;
 }
 
 .editor {
-    flex: 1; /* Takes up remaining space */
+    flex: 3; /* Takes up remaining space */
     padding: 10px;
     display: flex;
     flex-direction: column; /* Align children vertically */

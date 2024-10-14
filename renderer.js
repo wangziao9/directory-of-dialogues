@@ -2,36 +2,26 @@
 
 let chatHistory = [];
 let filePath = null;
+let filedirty = false;
 let editingIndex = null; // To track which message is being edited
 let busygenerating = false;
+let streambuffer = '';
+let dirPath = null;
+let fileTree = null;
 
 const textarea = document.querySelector('.message-input textarea');
 const roleselect = document.getElementById('role-select');
 const addbutton = document.getElementById('add-button');
 const messageList = document.getElementById('message-list');
+const dirtreeelem = document.getElementById('dir-content');
 
-// Register listeners in advance (before the stream starts)
-// BUGFIX 2: dont' put the following two calls inside addbutton.addEventListener
-// In essence, don't register event listeners inside the function body of an event listener
-// Handle each chunk of data as it arrives
-api.onStreamChunk((chunk) => {
-    console.log("chunk = ", chunk);
-    // Append chunk to the output element
-    c = messageList.children;
-    c[c.length-1].children[0].innerText += chunk;
-});
-// Handle the end of the stream
-api.onStreamEnd(() => {
-    busygenerating = false;
-    addbutton.disabled = false;
-    c = messageList.children;
-    chatHistory[chatHistory.length-1].content = c[c.length-1].children[0].innerText;
-});
 
 document.getElementById('clear-chat').addEventListener('click', () => {
     filePath = null;
+    filedirty = false;
     chatHistory = [];
     updateMessageList();
+    document.title = 'New Chat';
 });
 
 document.getElementById('open-file').addEventListener('click', () => {
@@ -41,14 +31,20 @@ document.getElementById('open-file').addEventListener('click', () => {
 window.electronAPI.on('file-opened', (path, content) => {
     chatHistory = JSON.parse(content);
     filePath = path;
+    filedirty = false;
     updateMessageList();
+    updateHTMLTitle();
 });
 
 document.getElementById('save-file').addEventListener('click', () => {
+    if (filePath === null) {
+        window.electronAPI.send('save-as-dialog', JSON.stringify(chatHistory));
+    } else
     window.electronAPI.send('save-file-dialog', filePath, JSON.stringify(chatHistory));
 });
 
 window.electronAPI.on('save-successful', () => {
+    filedirty = false;
     alert('Edits Saved');
 });
 
@@ -56,9 +52,25 @@ document.getElementById('save-as').addEventListener('click', () => {
     window.electronAPI.send('save-as-dialog', JSON.stringify(chatHistory));
 });
 
-window.electronAPI.on('save-as-successful', (filePath) => {
-    path = filePath;
-    alert('Current chat successfully saved to ' + filePath);
+window.electronAPI.on('save-as-successful', (filePathNew) => {
+    filePath = filePathNew;
+    filedirty = false;
+    alert('Current chat successfully saved to ' + filePathNew);
+    // refresh directory tree to reflect potential new file
+    if (dirPath !== null) window.electronAPI.send('open-dir', dirPath);
+    updateHTMLTitle();
+});
+
+document.getElementById('open-dir').addEventListener('click', () => {
+    window.electronAPI.send('open-dir-dialog');
+});
+
+window.electronAPI.on('dir-opened', (path, tree) => {
+    dirPath = path;
+    fileTree = JSON.parse(tree);
+    console.log("fileTree = ", fileTree);
+    renderdirtree();
+    updateHTMLTitle();
 });
 
 // Adjust textarea height based on content
@@ -67,12 +79,27 @@ textarea.addEventListener('input', function () {
     this.style.height = Math.min(this.scrollHeight, 10 * 1.5 * 16) + 'px'; // Limit to 10 lines
 });
 
+// Register listeners in advance (before the stream starts)
+api.onStreamChunk((chunk) => {
+    console.log("chunk = ", chunk);
+    c = messageList.children;
+    c[c.length-1].children[0].innerText += chunk;
+    streambuffer += chunk;
+});
+
+api.onStreamEnd(() => {
+    busygenerating = false;
+    addbutton.disabled = false;
+    chatHistory[chatHistory.length-1].content = streambuffer;
+    streambuffer = '';
+});
 
 addbutton.addEventListener('click', async () => {
     const role = roleselect.value;
     messageText = textarea.value;
     console.log("Role: ", role);
     console.log("Message: ", messageText);
+    filedirty = true;
 
     if (editingIndex !== null) {
         // Update the existing message
@@ -165,6 +192,62 @@ function editMessage(index) {
 }
 
 function deleteMessage(index) {
+    filedirty = true;
     chatHistory.splice(index, 1);
     updateMessageList();
+}
+
+function pathtail(path) {
+    return path.split('\\').pop();
+}
+
+function tree2elem(tree) {
+    if (tree == null) return null;
+    const elem = document.createElement('li');
+    elem.innerText = pathtail(tree.path);
+    if (tree.items.length == 0) {
+        elem.style.color = 'blue';
+        elem.onclick = () => {
+            console.log("clicked: ", tree.path);
+            if (filedirty == false)
+                window.electronAPI.send('open-file', tree.path);
+            else {
+                if (filePath !== null)
+                    window.electronAPI.send('save-and-open', tree.path, filePath, JSON.stringify(chatHistory));
+                else
+                    window.alert("Please save or clear the current chat before opening another file.");
+            }
+        }
+    } else {
+        const ul = document.createElement('ul');
+        tree.items.forEach(item => {
+            if (item.items.length > 0 || item.path.endsWith('.json'))
+                ul.appendChild(tree2elem(item));
+        })
+        elem.appendChild(ul);
+    }
+    return elem;
+}
+
+function renderdirtree() {
+    if (fileTree == null) return;
+    dirtreeelem.innerHTML = pathtail(fileTree.path);
+    const ul = document.createElement('ul');
+    fileTree.items.forEach(item => {
+        if (item.items.length > 0 || item.path.endsWith('.json'))
+            ul.appendChild(tree2elem(item));
+    })
+    dirtreeelem.appendChild(ul);
+}
+
+function updateHTMLTitle() {
+    if (filePath === null) {
+        document.title = 'New Chat';
+    } else if (dirPath !== null && filePath.startsWith(dirPath)) {
+        // Omit the path to directory
+        const relpath = filePath.substring(dirPath.length+1);
+        document.title = relpath;
+    } else {
+        document.title = filePath;
+    }
 }

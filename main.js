@@ -2,6 +2,7 @@ require('dotenv').config();
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const FileTree = require('./utilities/filetree.js');
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -49,6 +50,40 @@ ipcMain.on('save-as-dialog', async (event, content) => {
     event.reply('save-as-successful', result.filePath);
 });
 
+ipcMain.on('open-dir-dialog', async (event) => {
+    const result = await dialog.showOpenDialog({
+        properties: ['openDirectory'],
+    });
+
+    if (result.canceled) return;
+    const dirPath = result.filePaths[0];
+    const fileTree = new FileTree(dirPath);
+    fileTree.build();
+    event.reply('dir-opened', dirPath, JSON.stringify(fileTree));
+});
+
+ipcMain.on('open-file', async (event, filePath) => {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    event.reply('file-opened', filePath, content);
+});
+
+ipcMain.on('save-and-open', async (event, newpath, oldpath, content) => {
+    const result = await dialog.showMessageBox({
+        message: 'Save current chat and open new chat?',
+        type: 'question',
+        buttons: ['Save', 'Cancel'],
+    })
+    if (result.response === 0) {
+        fs.writeFileSync(oldpath, content, 'utf-8');
+        event.reply('file-opened', newpath, fs.readFileSync(newpath, 'utf-8'));
+    }
+});
+
+ipcMain.on('open-dir', async (event, dirPath) => {
+    const fileTree = new FileTree(dirPath);
+    fileTree.build();
+    event.reply('dir-opened', dirPath, JSON.stringify(fileTree));
+});
 
 const OpenAI = require('openai');
 const openai = new OpenAI(api_key = process.env.OPENAI_API_KEY);
