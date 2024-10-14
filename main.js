@@ -9,7 +9,7 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: true, // For simplicity, not recommended for production
+            contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
         },
     });
@@ -42,6 +42,7 @@ ipcMain.on('save-file-dialog', async (event, content) => {
     event.reply('file-save-successful', result.filePath);
 });
 
+
 const OpenAI = require('openai');
 const openai = new OpenAI(api_key = process.env.OPENAI_API_KEY);
 
@@ -67,4 +68,19 @@ ipcMain.handle('send-prompt', async (event, chatHistory) => {
     console.log("handling send-prompt: chatHistory = ", chatHistory);
     const response = await sendMessageToOpenAI(chatHistory);
     return response;
+});
+
+ipcMain.handle('start-stream', async (event, messages) => {
+    const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: messages,
+        stream: true,
+    });
+
+    for await (const chunk of stream) {
+        console.log("main.js  chunk.choices[0]?.delta?.content = ",  chunk.choices[0]?.delta?.content);
+        event.sender.send('stream-chunk', chunk.choices[0]?.delta?.content || "");
+    }
+
+    event.sender.send('stream-end'); // Notify that the stream is complete
 });

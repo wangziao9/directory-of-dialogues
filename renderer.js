@@ -2,10 +2,28 @@
 
 let chatHistory = [];
 let editingIndex = null; // To track which message is being edited
+let busygenerating = false;
 
 const textarea = document.querySelector('.message-input textarea');
 const roleselect = document.getElementById('role-select');
 const addbutton = document.getElementById('add-button');
+const messageList = document.getElementById('message-list');
+
+// Register listeners in advance (before the stream starts)
+// BUGFIX 2: dont' put the following two calls inside addbutton.addEventListener
+// In essence, don't register event listeners inside the function body of an event listener
+// Handle each chunk of data as it arrives
+api.onStreamChunk((chunk) => {
+    console.log("chunk = ", chunk);
+    // Append chunk to the output element
+    c = messageList.children;
+    c[c.length-1].children[0].innerText += chunk;
+});
+// Handle the end of the stream
+api.onStreamEnd(() => {
+    busygenerating = false;
+    addbutton.disabled = false;
+});
 
 document.getElementById('clear-chat').addEventListener('click', () => {
     chatHistory = [];
@@ -52,14 +70,14 @@ addbutton.addEventListener('click', async () => {
         updateMessageList();
         return;
     }
+
     if (!messageText) {
         if (role == 'assistant') {
             // Let ChatGPT generate a message as a 'assistant'
-            console.log("Trying to generate");
-            const response = await api.sendPrompt(chatHistory);
-            console.log("type of response: ", typeof response);
-            console.log("Response: ", response);
-            messageText = response;
+            // alternatively, use blocking call: const response = await api.sendPrompt(chatHistory);
+            busygenerating = true;
+            addbutton.disabled = true;
+            api.startStream(chatHistory); // BUGFIX 2: don't put await here
         } else {
             alert('Please enter a message to send');
             return;
@@ -79,7 +97,6 @@ addbutton.addEventListener('click', async () => {
 });
 
 function updateMessageList() {
-    const messageList = document.getElementById('message-list');
     messageList.innerHTML = ''; // Clear existing list
 
     chatHistory.forEach((message, index) => {
