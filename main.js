@@ -28,10 +28,17 @@ ipcMain.on('open-file-dialog', async (event) => { // must be async because dialo
     if (result.canceled) return;
     const filePath = result.filePaths[0];
     const content = fs.readFileSync(filePath, 'utf-8');
-    event.reply('file-opened', content);
+    event.reply('file-opened', filePath, content);
 });
 
-ipcMain.on('save-file-dialog', async (event, content) => {
+ipcMain.on('save-file-dialog', async (event, path, content) => {
+    console.log("in save-file-dialog: path = ", path);
+    console.log("in save-file-dialog: content = ", content);
+    fs.writeFileSync(path, content, 'utf-8');
+    event.reply('save-successful');
+});
+
+ipcMain.on('save-as-dialog', async (event, content) => {
     const result = await dialog.showSaveDialog({
         properties: ['showOverwriteConfirmation', 'showHiddenFiles'],
         filters: [{ name: 'JSON Files', extensions: ['json'] }],
@@ -39,7 +46,7 @@ ipcMain.on('save-file-dialog', async (event, content) => {
 
     if (result.canceled) return;
     fs.writeFileSync(result.filePath, content, 'utf-8');
-    event.reply('file-save-successful', result.filePath);
+    event.reply('save-as-successful', result.filePath);
 });
 
 

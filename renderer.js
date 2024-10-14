@@ -1,6 +1,7 @@
 // const { ipcRenderer } = require('electron');
 
 let chatHistory = [];
+let filePath = null;
 let editingIndex = null; // To track which message is being edited
 let busygenerating = false;
 
@@ -23,9 +24,12 @@ api.onStreamChunk((chunk) => {
 api.onStreamEnd(() => {
     busygenerating = false;
     addbutton.disabled = false;
+    c = messageList.children;
+    chatHistory[chatHistory.length-1].content = c[c.length-1].children[0].innerText;
 });
 
 document.getElementById('clear-chat').addEventListener('click', () => {
+    filePath = null;
     chatHistory = [];
     updateMessageList();
 });
@@ -34,16 +38,26 @@ document.getElementById('open-file').addEventListener('click', () => {
     window.electronAPI.send('open-file-dialog');
 }); // () => {...} is called a callback function
 
-window.electronAPI.on('file-opened', (content) => {
+window.electronAPI.on('file-opened', (path, content) => {
     chatHistory = JSON.parse(content);
+    filePath = path;
     updateMessageList();
 });
 
 document.getElementById('save-file').addEventListener('click', () => {
-    window.electronAPI.send('save-file-dialog', JSON.stringify(chatHistory));
+    window.electronAPI.send('save-file-dialog', filePath, JSON.stringify(chatHistory));
 });
 
-window.electronAPI.on('file-save-successful', (filePath) => {
+window.electronAPI.on('save-successful', () => {
+    alert('Edits Saved');
+});
+
+document.getElementById('save-as').addEventListener('click', () => {
+    window.electronAPI.send('save-as-dialog', JSON.stringify(chatHistory));
+});
+
+window.electronAPI.on('save-as-successful', (filePath) => {
+    path = filePath;
     alert('Current chat successfully saved to ' + filePath);
 });
 
