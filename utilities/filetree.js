@@ -5,7 +5,7 @@ var fs = require('fs');
 class FileTree {
     constructor(path){
         this.path = path;
-        this.items = [];
+        this.items = null;
     }
 
     build = () => {

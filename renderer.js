@@ -45,7 +45,7 @@ document.getElementById('save-file').addEventListener('click', () => {
 
 window.electronAPI.on('save-successful', () => {
     filedirty = false;
-    alert('Edits Saved');
+    // alert('Edits Saved'); commented because it causes the glitch that the textarea cannot be selected
 });
 
 document.getElementById('save-as').addEventListener('click', () => {
@@ -55,7 +55,7 @@ document.getElementById('save-as').addEventListener('click', () => {
 window.electronAPI.on('save-as-successful', (filePathNew) => {
     filePath = filePathNew;
     filedirty = false;
-    alert('Current chat successfully saved to ' + filePathNew);
+    // alert('Current chat successfully saved to ' + filePathNew); commented because it causes glitch
     // refresh directory tree to reflect potential new file
     if (dirPath !== null) window.electronAPI.send('open-dir', dirPath);
     updateHTMLTitle();
@@ -205,7 +205,7 @@ function tree2elem(tree) {
     if (tree == null) return null;
     const elem = document.createElement('li');
     elem.innerText = pathtail(tree.path);
-    if (tree.items.length == 0) {
+    if (tree.items == null) {
         elem.style.color = 'blue';
         elem.onclick = () => {
             console.log("clicked: ", tree.path);
@@ -221,7 +221,7 @@ function tree2elem(tree) {
     } else {
         const ul = document.createElement('ul');
         tree.items.forEach(item => {
-            if (item.items.length > 0 || item.path.endsWith('.json'))
+            if (item.items != null || item.path.endsWith('.json'))
                 ul.appendChild(tree2elem(item));
         })
         elem.appendChild(ul);
