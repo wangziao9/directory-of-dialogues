@@ -2,6 +2,12 @@
 // https://www.electronjs.org/docs/latest/tutorial/tutorial-preload
 
 const { contextBridge, ipcRenderer } = require('electron');
+const marked = require('marked');
+// console.log("in preload.js, marked: ", marked);
+marked.setOptions({
+    gfm: true, // Enable GitHub Flavored Markdown
+    breaks: true, // Convert newlines to <br> tags
+});
 
 contextBridge.exposeInMainWorld('api', {
     sendPrompt: async (prompt) => {
@@ -25,6 +31,9 @@ contextBridge.exposeInMainWorld('api', {
             callback();
         });
     },
+    render: (markdown) => {
+        return marked(markdown);
+    }
 });
 
 contextBridge.exposeInMainWorld('electronAPI', {

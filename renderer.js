@@ -32,8 +32,10 @@ window.electronAPI.on('file-opened', (path, content) => {
     chatHistory = JSON.parse(content);
     filePath = path;
     filedirty = false;
+    editingIndex = null;
     updateMessageList();
     updateHTMLTitle();
+    adjustAddButton();
 });
 
 document.getElementById('save-file').addEventListener('click', () => {
@@ -73,11 +75,29 @@ window.electronAPI.on('dir-opened', (path, tree) => {
     updateHTMLTitle();
 });
 
+// Adjust the add button
+function adjustAddButton(index) {
+    addbutton.style.backgroundColor = '#f0f0f0';
+    addbutton.style.color = 'black';
+    if (editingIndex != null) {
+        addbutton.textContent = 'Save #' + index;
+    } else if (roleselect.value == 'assistant' && textarea.value == '') {
+        addbutton.textContent = 'Generate';
+        addbutton.style.backgroundColor = 'purple';
+        addbutton.style.color = 'white';
+    } else {
+        addbutton.textContent = 'Add';
+    }
+}
+
 // Adjust textarea height based on content
 textarea.addEventListener('input', function () {
     this.style.height = 'auto'; // Reset the height
     this.style.height = Math.min(this.scrollHeight, 10 * 1.5 * 16) + 'px'; // Limit to 10 lines
+    adjustAddButton();
 });
+
+roleselect.addEventListener('change', adjustAddButton);
 
 // Register listeners in advance (before the stream starts)
 api.onStreamChunk((chunk) => {
@@ -92,6 +112,7 @@ api.onStreamEnd(() => {
     addbutton.disabled = false;
     chatHistory[chatHistory.length-1].content = streambuffer;
     streambuffer = '';
+    updateMessageList();
 });
 
 addbutton.addEventListener('click', async () => {
@@ -105,10 +126,12 @@ addbutton.addEventListener('click', async () => {
         // Update the existing message
         chatHistory[editingIndex] = { role, content: messageText };
         editingIndex = null; // Reset the editing index
-        addbutton.textContent = 'Add';
         textarea.value = ''; // Clear input
         textarea.style.height = 'auto'; // Reset the height
+        if (chatHistory[chatHistory.length-1].role == 'user') roleselect.value = 'assistant'
+        else roleselect.value = 'user';
         updateMessageList();
+        adjustAddButton();
         return;
     }
 
@@ -118,7 +141,7 @@ addbutton.addEventListener('click', async () => {
             // alternatively, use blocking call: const response = await api.sendPrompt(chatHistory);
             busygenerating = true;
             addbutton.disabled = true;
-            api.startStream(chatHistory); // BUGFIX 2: don't put await here
+            api.startStream(chatHistory); // there is no reason to put await here
         } else {
             alert('Please enter a message to send');
             return;
@@ -135,6 +158,7 @@ addbutton.addEventListener('click', async () => {
     } else {
         roleselect.value = 'assistant';
     }
+    adjustAddButton();
 });
 
 function updateMessageList() {
@@ -143,23 +167,19 @@ function updateMessageList() {
     chatHistory.forEach((message, index) => {
         const messageItem = document.createElement('div');
         messageItem.className = 'message-item';
-        messageItem.style.display = 'flex';
-        messageItem.style.justifyContent = 'space-between';
-        messageItem.style.alignItems = 'center';
-        messageItem.style.paddingTop = '10px';
-        messageItem.style.paddingBottom = '10px';
+        if (message.role == 'assistant') messageItem.style.backgroundColor = '#f0f0f0';
 
         // Create a span to hold the message text
         const messageText = document.createElement('span');
-        messageText.innerText = `#${index} [${message.role}]: ${message.content}`;
-        messageText.style.whiteSpace = 'pre-wrap'; // Ensure long words are wrapped
+        messageText.innerHTML = api.render(`#${index} [${message.role}]: ${message.content}`);
+        messageText.style.whiteSpace = 'pre-line'; // Preserve and collapse whitespace. If commented, will be compact.
         messageText.style.wordBreak = 'break-word'; // Ensure long words are wrapped
-        messageText.style.flexGrow = '1';
 
         // Create a container for the buttons
         const buttonContainer = document.createElement('div');
         buttonContainer.style.display = 'flex';
         buttonContainer.style.gap = '10px';
+        buttonContainer.style.marginTop = '5px';
 
         // Create Edit button
         const editButton = document.createElement('button');
@@ -186,9 +206,11 @@ function editMessage(index) {
     const message = chatHistory[index];
     roleselect.value = message.role;
     textarea.value = message.content;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 10 * 1.5 * 16) + 'px';
 
     editingIndex = index; // Set the index of the message being edited
-    addbutton.textContent = 'Save #' + index;
+    adjustAddButton(index);
 }
 
 function deleteMessage(index) {
