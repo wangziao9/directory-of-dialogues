@@ -1,5 +1,3 @@
-// const { ipcRenderer } = require('electron');
-
 let chatHistory = [];
 let filePath = null;
 let filedirty = false;
@@ -25,10 +23,10 @@ document.getElementById('clear-chat').addEventListener('click', () => {
 });
 
 document.getElementById('open-file').addEventListener('click', () => {
-    window.electronAPI.send('open-file-dialog');
-}); // () => {...} is called a callback function
+    electron.send('open-file-dialog');
+});
 
-window.electronAPI.on('file-opened', (path, content) => {
+electron.on('file-opened', (path, content) => {
     chatHistory = JSON.parse(content);
     filePath = path;
     filedirty = false;
@@ -40,34 +38,34 @@ window.electronAPI.on('file-opened', (path, content) => {
 
 document.getElementById('save-file').addEventListener('click', () => {
     if (filePath === null) {
-        window.electronAPI.send('save-as-dialog', JSON.stringify(chatHistory));
+        electron.send('save-as-dialog', JSON.stringify(chatHistory));
     } else
-    window.electronAPI.send('save-file-dialog', filePath, JSON.stringify(chatHistory));
+    electron.send('save-file-dialog', filePath, JSON.stringify(chatHistory));
 });
 
-window.electronAPI.on('save-successful', () => {
+electron.on('save-successful', () => {
     filedirty = false;
     // alert('Edits Saved'); commented because it causes the glitch that the textarea cannot be selected
 });
 
 document.getElementById('save-as').addEventListener('click', () => {
-    window.electronAPI.send('save-as-dialog', JSON.stringify(chatHistory));
+    electron.send('save-as-dialog', JSON.stringify(chatHistory));
 });
 
-window.electronAPI.on('save-as-successful', (filePathNew) => {
+electron.on('save-as-successful', (filePathNew) => {
     filePath = filePathNew;
     filedirty = false;
     // alert('Current chat successfully saved to ' + filePathNew); commented because it causes glitch
     // refresh directory tree to reflect potential new file
-    if (dirPath !== null) window.electronAPI.send('open-dir', dirPath);
+    if (dirPath !== null) electron.send('open-dir', dirPath);
     updateHTMLTitle();
 });
 
 document.getElementById('open-dir').addEventListener('click', () => {
-    window.electronAPI.send('open-dir-dialog');
+    electron.send('open-dir-dialog');
 });
 
-window.electronAPI.on('dir-opened', (path, tree) => {
+electron.on('dir-opened', (path, tree) => {
     dirPath = path;
     fileTree = JSON.parse(tree);
     console.log("fileTree = ", fileTree);
@@ -100,14 +98,14 @@ textarea.addEventListener('input', function () {
 roleselect.addEventListener('change', adjustAddButton);
 
 // Register listeners in advance (before the stream starts)
-api.onStreamChunk((chunk) => {
+electron.on('stream-chunk', (chunk) => {
     console.log("chunk = ", chunk);
     c = messageList.children;
     c[c.length-1].children[0].innerText += chunk;
     streambuffer += chunk;
 });
 
-api.onStreamEnd(() => {
+electron.on('stream-end', () => {
     busygenerating = false;
     addbutton.disabled = false;
     chatHistory[chatHistory.length-1].content = streambuffer;
@@ -137,11 +135,11 @@ addbutton.addEventListener('click', async () => {
 
     if (!messageText) {
         if (role == 'assistant') {
-            // Let ChatGPT generate a message as a 'assistant'
-            // alternatively, use blocking call: const response = await api.sendPrompt(chatHistory);
+            // alternatively, use blocking call: const response = await electron.invoke('send-prompt', chatHistory);
+            // or electron.invoke('send-prompt', chatHistory).then(response => { ... });
             busygenerating = true;
             addbutton.disabled = true;
-            api.startStream(chatHistory); // there is no reason to put await here
+            electron.invoke('start-stream', chatHistory);
         } else {
             alert('Please enter a message to send');
             return;
@@ -171,7 +169,7 @@ function updateMessageList() {
 
         // Create a span to hold the message text
         const messageText = document.createElement('span');
-        messageText.innerHTML = api.render(`#${index} [${message.role}]: ${message.content}`);
+        messageText.innerHTML = marked.render(`#${index} [${message.role}]: ${message.content}`);
         messageText.style.whiteSpace = 'pre-line'; // Preserve and collapse whitespace. If commented, will be compact.
         messageText.style.wordBreak = 'break-word'; // Ensure long words are wrapped
 
@@ -232,10 +230,10 @@ function tree2elem(tree) {
         elem.onclick = () => {
             console.log("clicked: ", tree.path);
             if (filedirty == false)
-                window.electronAPI.send('open-file', tree.path);
+                electron.send('open-file', tree.path);
             else {
                 if (filePath !== null)
-                    window.electronAPI.send('save-and-open', tree.path, filePath, JSON.stringify(chatHistory));
+                    electron.send('save-and-open', tree.path, filePath, JSON.stringify(chatHistory));
                 else
                     window.alert("Please save or clear the current chat before opening another file.");
             }

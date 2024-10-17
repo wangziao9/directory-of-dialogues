@@ -4,41 +4,18 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const marked = require('marked');
 // console.log("in preload.js, marked: ", marked);
+
 marked.setOptions({
     gfm: true, // Enable GitHub Flavored Markdown
     breaks: true, // Convert newlines to <br> tags
 });
 
-contextBridge.exposeInMainWorld('api', {
-    sendPrompt: async (prompt) => {
-        return await ipcRenderer.invoke('send-prompt', prompt);
-    },
-    startStream: async (prompt) => {
-        console.log('Setting up startStream');
-        await ipcRenderer.invoke('start-stream', prompt);
-    },
-    onStreamChunk: (callback) => {
-        console.log('Setting up onStreamChunk');
-        ipcRenderer.on('stream-chunk', (event, chunk) => {
-            console.log('Received chunk in preload.js');
-            callback(chunk);
-        });
-    },
-    onStreamEnd: (callback) => {
-        console.log('Setting up onStreamEnd');
-        ipcRenderer.on('stream-end', () => {
-            console.log('Received stream end in preload.js');
-            callback();
-        });
-    },
-    render: (markdown) => {
-        return marked(markdown);
-    }
+contextBridge.exposeInMainWorld('marked', {
+    render: (markdown) => marked(markdown)
 });
 
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld('electron', {
     send: (channel, ...args) => ipcRenderer.send(channel, ...args),
-    on: (channel, func) => {
-        ipcRenderer.on(channel, (event, ...args) => func(...args));
-    }
+    on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args)),
+    invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args) // in main process, write ipcMain.handle
 });
