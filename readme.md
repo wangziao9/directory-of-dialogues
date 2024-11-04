@@ -14,10 +14,14 @@ Save your chat sessions as a json file in the directory tree
 
 ![img](demo-gifs/save-as.gif)
 
-## How to run
+## How to run the application with the source code
 
 1. Create a .env file in this directory containing your OpenAI API key "OPENAI_API_KEY=<your-api-key>"
 2. `npm install`
 3. `npm start`
 
-## More Explanations
+## How to package the project to a desktop application
+
+1. npm install
+2. npm run make
+3. the packaged application is in the out/ folder. (Note: Your OpenAI API key in the .env file is included in the packaged application)
