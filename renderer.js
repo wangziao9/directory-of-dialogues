@@ -74,11 +74,11 @@ electron.on('dir-opened', (path, tree) => {
 });
 
 // Adjust the add button
-function adjustAddButton(index) {
+function adjustAddButton() {
     addbutton.style.backgroundColor = '#f0f0f0';
     addbutton.style.color = 'black';
     if (editingIndex != null) {
-        addbutton.textContent = 'Save #' + index;
+        addbutton.textContent = 'Save #' + editingIndex;
     } else if (roleselect.value == 'assistant' && textarea.value == '') {
         addbutton.textContent = 'Generate';
         addbutton.style.backgroundColor = 'purple';
