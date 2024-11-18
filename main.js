@@ -2,7 +2,7 @@ require('dotenv').config();
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
-const FileTree = require('./utilities/filetree.js');
+const DirTree = require('./utilities/dir-tree.js');
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -57,9 +57,9 @@ ipcMain.on('open-dir-dialog', async (event) => {
 
     if (result.canceled) return;
     const dirPath = result.filePaths[0];
-    const fileTree = new FileTree(dirPath);
-    fileTree.build();
-    event.reply('dir-opened', dirPath, JSON.stringify(fileTree));
+    const dirTree = new DirTree(dirPath);
+    dirTree.buildTree();
+    event.reply('dir-opened', dirPath, JSON.stringify(dirTree));
 });
 
 ipcMain.on('open-file', async (event, filePath) => {
@@ -80,9 +80,9 @@ ipcMain.on('save-and-open', async (event, newpath, oldpath, content) => {
 });
 
 ipcMain.on('open-dir', async (event, dirPath) => {
-    const fileTree = new FileTree(dirPath);
-    fileTree.build();
-    event.reply('dir-opened', dirPath, JSON.stringify(fileTree));
+    const dirTree = new DirTree(dirPath);
+    dirTree.buildTree();
+    event.reply('dir-opened', dirPath, JSON.stringify(dirTree));
 });
 
 const OpenAI = require('openai');
@@ -114,7 +114,7 @@ ipcMain.handle('send-prompt', async (event, chatHistory) => {
 
 ipcMain.handle('start-stream', async (event, messages) => {
     const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: messages,
         stream: true,
     });

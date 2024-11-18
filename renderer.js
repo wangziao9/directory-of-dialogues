@@ -5,7 +5,7 @@ let editingIndex = null; // To track which message is being edited
 let busygenerating = false;
 let streambuffer = '';
 let dirPath = null;
-let fileTree = null;
+let dirTree = null;
 
 const textarea = document.querySelector('.message-input textarea');
 const roleselect = document.getElementById('role-select');
@@ -67,8 +67,8 @@ document.getElementById('open-dir').addEventListener('click', () => {
 
 electron.on('dir-opened', (path, tree) => {
     dirPath = path;
-    fileTree = JSON.parse(tree);
-    console.log("fileTree = ", fileTree);
+    dirTree = JSON.parse(tree);
+    console.log("dirTree = ", dirTree);
     renderdirtree();
     updateHTMLTitle();
 });
@@ -218,14 +218,14 @@ function deleteMessage(index) {
 }
 
 function pathtail(path) {
-    return path.split('\\').pop();
+    return path.split('/').pop();
 }
 
 function tree2elem(tree) {
     if (tree == null) return null;
     const elem = document.createElement('li');
     elem.innerText = pathtail(tree.path);
-    if (tree.items == null) {
+    if (tree.children == null) {
         elem.style.color = 'blue';
         elem.onclick = () => {
             console.log("clicked: ", tree.path);
@@ -240,9 +240,9 @@ function tree2elem(tree) {
         }
     } else {
         const ul = document.createElement('ul');
-        tree.items.forEach(item => {
-            if (item.items != null || item.path.endsWith('.json'))
-                ul.appendChild(tree2elem(item));
+        tree.children.forEach(file => {
+            if (file.children != null || file.path.endsWith('.json'))
+                ul.appendChild(tree2elem(file));
         })
         elem.appendChild(ul);
     }
@@ -250,12 +250,12 @@ function tree2elem(tree) {
 }
 
 function renderdirtree() {
-    if (fileTree == null) return;
-    dirtreeelem.innerHTML = pathtail(fileTree.path);
+    if (dirTree == null) return;
+    dirtreeelem.innerHTML = pathtail(dirTree.path);
     const ul = document.createElement('ul');
-    fileTree.items.forEach(item => {
-        if (item.items.length > 0 || item.path.endsWith('.json'))
-            ul.appendChild(tree2elem(item));
+    dirTree.children.forEach(file => {
+        if (file.children.length > 0 || file.path.endsWith('.json'))
+            ul.appendChild(tree2elem(file));
     })
     dirtreeelem.appendChild(ul);
 }
