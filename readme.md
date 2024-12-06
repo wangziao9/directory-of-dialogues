@@ -25,3 +25,7 @@ Save your chat sessions as a json file in the directory tree
 1. npm install
 2. npm run make
 3. the packaged application is in the out/ folder. (Note: Your OpenAI API key in the .env file is included in the packaged application)
+
+## Next Steps
+1. Let users add their own API key.
+2. Handle errors from OpenAI API.
