@@ -254,7 +254,7 @@ function renderdirtree() {
     dirtreeelem.innerHTML = pathtail(dirTree.path);
     const ul = document.createElement('ul');
     dirTree.children.forEach(file => {
-        if (file.children.length > 0 || file.path.endsWith('.json'))
+        if (file.path.endsWith('.json') || (file.children && file.children.length > 0))
             ul.appendChild(tree2elem(file));
     })
     dirtreeelem.appendChild(ul);
