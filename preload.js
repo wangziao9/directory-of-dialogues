@@ -11,7 +11,7 @@ marked.setOptions({
 });
 
 contextBridge.exposeInMainWorld('marked', {
-    render: (markdown) => marked(markdown)
+    render: (markdown) => marked.parse(markdown)
 });
 
 contextBridge.exposeInMainWorld('electron', {
