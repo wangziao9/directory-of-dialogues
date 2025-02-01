@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <style>
+        form {
+            display: flex;
+            flex-direction: column;
+            max-width: 300px;
+        }
+        label {
+            margin-top: 10px;
+        }
+        input {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Settings</h2>
+    <form id="settings-form">
+        <label for="api-key">API Key:</label>
+        <input type="password" id="api-key" name="api-key" required>
+        <br>
+        <label for="base-url">Base URL:</label>
+        <input type="text" id="base-url" name="base-url" required>
+        <br>
+        <label for="model-name">Model Name:</label>
+        <input type="text" id="model-name" name="model-name" required>
+        <br>
+        <button type="submit">Save</button>
+    </form>
+    <script src="settings.js"></script>
+</body>
+</html>

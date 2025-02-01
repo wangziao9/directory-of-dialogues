@@ -1,8 +1,16 @@
 require('dotenv').config();
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const DirTree = require('./utilities/dir-tree.js');
+let mainWin = null;
+
+let apiKey = "<your-api-key>";
+let modelName = "gpt-4o";
+let baseUrl = "https://api.openai.com/v1/";
+
+const OpenAI = require('openai');
+let openai = null;
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -16,9 +24,23 @@ function createWindow() {
     });
 
     win.loadFile('index.html');
+    mainWin = win;
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    createWindow();
+    const settings = loadSettings();
+    if (settings) {
+        console.log('Loaded user settings:', settings);
+        ({ apiKey, modelName, baseUrl } = settings);
+        mainWin.webContents.on('did-finish-load', () => {
+            mainWin.webContents.send('settings-loaded', settings);
+        });
+    } else {
+        console.log('No user settings found.');
+    }
+    openai = new OpenAI({apiKey: apiKey, baseURL: baseUrl});
+});
 
 ipcMain.on('open-file-dialog', async (event) => { // must be async because dialog.showOpenDialog is a IO
     const result = await dialog.showOpenDialog({
@@ -85,17 +107,91 @@ ipcMain.on('open-dir', async (event, dirPath) => {
     event.reply('dir-opened', dirPath, JSON.stringify(dirTree));
 });
 
-const OpenAI = require('openai');
-const openai = new OpenAI(api_key = process.env.OPENAI_API_KEY);
+// Settings Related
+
+function createSettingsWindow() {
+    const settingsWindow = new BrowserWindow({
+        width: 500,
+        height: 500,
+        parent: BrowserWindow.getFocusedWindow(),
+        modal: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: true,
+            contextIsolation: true,
+            enableRemoteModule: false,
+        },
+    });
+    settingsWindow.loadFile('settings.html').then(() => {
+        console.log("prefill settings: apiKey = ", apiKey, ", modelName = ", modelName, ", baseUrl = ", baseUrl);
+        settingsWindow.webContents.send('prefill-settings', { apiKey, modelName, baseUrl });
+    });
+}
+
+
+ipcMain.on('update-settings', async () => {
+    createSettingsWindow();
+})
+
+function getSettingsFilePath() {
+    return path.join(app.getPath('userData'), 'user-settings.json');
+}
+
+ipcMain.on('save-settings', (event, settings) => {
+    console.log("in save-settings: settings = ", settings);
+    ({ apiKey, modelName, baseUrl } = settings);
+    let encryptedApiKey;
+    if (safeStorage.isEncryptionAvailable()) {
+        encryptedApiKey = safeStorage.encryptString(apiKey).toString('base64');
+    } else {
+        console.error('Encryption is not available on this system.');
+        return;
+    }
+    const userSettings = {
+        apiKey: encryptedApiKey,
+        modelName,
+        baseUrl
+    };
+    fs.writeFileSync(getSettingsFilePath(), JSON.stringify(userSettings));
+    mainWin.webContents.send('settings-loaded', settings);
+    openai = new OpenAI({apiKey: apiKey, baseURL: baseUrl});
+});
+
+function loadSettings() {
+    const settingsFilePath = getSettingsFilePath();
+    if (fs.existsSync(settingsFilePath)) {
+        const data = fs.readFileSync(settingsFilePath);
+        const userSettings = JSON.parse(data);
+        // Decrypt the API key
+        let decryptedApiKey;
+        if (safeStorage.isEncryptionAvailable()) {
+            const encryptedBuffer = Buffer.from(userSettings.apiKey, 'base64');
+            decryptedApiKey = safeStorage.decryptString(encryptedBuffer);
+        } else {
+            console.error('Decryption is not available on this system.');
+            return null;
+        }
+        return {
+            apiKey: decryptedApiKey,
+            modelName: userSettings.modelName,
+            baseUrl: userSettings.baseUrl
+        };
+    } else {
+        console.log('No settings file found.');
+        return null;
+    }
+}
+
+// API related
 
 async function sendMessageToOpenAI(prompt) {
     console.log("in sendMessageToOpenAI: prompt = ", prompt);
     try {
         // https://platform.openai.com/docs/api-reference/chat/create?lang=node.js
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model: modelName,
             messages: prompt,
-            // max_tokens: 100,
+            // more options here
         });
         console.log("completion: ", completion);
         return completion.choices[0].message.content;
@@ -113,16 +209,19 @@ ipcMain.handle('send-prompt', async (event, chatHistory) => {
 });
 
 ipcMain.handle('start-stream', async (event, messages) => {
-    const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: messages,
-        stream: true,
-    });
-
-    for await (const chunk of stream) {
-        console.log("main.js  chunk.choices[0]?.delta?.content = ",  chunk.choices[0]?.delta?.content);
-        event.sender.send('stream-chunk', chunk.choices[0]?.delta?.content || "");
+    try {
+        const stream = await openai.chat.completions.create({
+            model: modelName,
+            messages: messages,
+            stream: true,
+        });
+        for await (const chunk of stream) {
+            console.log("main.js  chunk.choices[0]?.delta?.content = ",  chunk.choices[0]?.delta?.content);
+            event.sender.send('stream-chunk', chunk.choices[0]?.delta?.content || "");
+        }
+    } catch (err) {
+        console.log(err);
+        event.sender.send('stream-error', err);
     }
-
     event.sender.send('stream-end'); // Notify that the stream is complete
 });

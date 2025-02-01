@@ -106,3 +106,16 @@ ol {
     background-color: #f0f0f0;
     color: black;
 }
+
+.message-top {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Optional spacing between elements */
+    width: 100%; /* Ensure it takes the full width of its parent */
+}
+
+.horizontal-line {
+    border-top: 1px solid #ccc;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

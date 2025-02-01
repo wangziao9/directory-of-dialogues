@@ -12,7 +12,11 @@ const roleselect = document.getElementById('role-select');
 const addbutton = document.getElementById('add-button');
 const messageList = document.getElementById('message-list');
 const dirtreeelem = document.getElementById('dir-content');
+const messagetop = document.getElementById('message-top');
 
+document.getElementById('update-settings').addEventListener('click', () => {
+    electron.send('update-settings');
+});
 
 document.getElementById('clear-chat').addEventListener('click', () => {
     filePath = null;
@@ -105,12 +109,24 @@ electron.on('stream-chunk', (chunk) => {
     streambuffer += chunk;
 });
 
+electron.on('stream-error', (error) => {
+    c = messageList.children;
+    let msg = `<span style="color: red;"> Error: ${error.message} </span>`
+    c[c.length-1].children[0].innerHTML += msg;
+    streambuffer += msg;
+});
+
 electron.on('stream-end', () => {
     busygenerating = false;
     addbutton.disabled = false;
     chatHistory[chatHistory.length-1].content = streambuffer;
     streambuffer = '';
     updateMessageList();
+});
+
+electron.on('settings-loaded', (settings) => {
+    console.log("RECV settings-loaded, changing inner text");
+    messagetop.innerText = `Model Name: ${settings.modelName}, Base URL: ${settings.baseUrl}`;
 });
 
 addbutton.addEventListener('click', async () => {

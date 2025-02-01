@@ -16,16 +16,21 @@ Save your chat sessions as a json file in the directory tree
 
 ## How to run the application with the source code
 
-1. Create a .env file in this directory containing your OpenAI API key "OPENAI_API_KEY=<your-api-key>"
-2. `npm install`
-3. `npm start`
+1. `npm install`
+2. `npm start`
 
 ## How to package the project to a desktop application
 
-1. npm install
-2. npm run make
-3. the packaged application is in the out/ folder. (Note: Your OpenAI API key in the .env file is included in the packaged application)
+1. `npm install`
+2. `npm run make`
+3. the packaged application is in the out/ folder
+
+## You must fill in an API key, base url and model name in application to chat
+
+- Example base-url: https://api.openai.com/v1/
+- Example model-name: gpt-4o
 
 ## Next Steps
-1. Let users add their own API key.
-2. Handle errors from OpenAI API.
+
+1. Let users add their own API key. (Done)
+2. Handle errors from OpenAI API. (Done)
