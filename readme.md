@@ -34,3 +34,4 @@ Save your chat sessions as a json file in the directory tree
 
 1. Let users add their own API key. (Done)
 2. Handle errors from OpenAI API. (Done)
+3. Support the app on Linux platforms.

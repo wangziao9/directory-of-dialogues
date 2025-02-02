@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require('electron');
+if (require('electron-squirrel-startup')) app.quit();
 const fs = require('fs');
 const path = require('path');
 const DirTree = require('./utilities/dir-tree.js');
