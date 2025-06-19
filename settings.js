@@ -7,6 +7,7 @@ document.getElementById('settings-form').addEventListener('submit', (event) => {
     // Send the settings to the main process for storage
     console.log("sending save-settings: apiKey = ", apiKey, ", modelName = ", modelName, ", baseUrl = ", baseUrl);
     electron.send('save-settings', { apiKey, modelName, baseUrl });
+    window.close();
 });
 
 electron.on('prefill-settings', (settings) => {

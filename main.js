@@ -141,42 +141,81 @@ function getSettingsFilePath() {
 ipcMain.on('save-settings', (event, settings) => {
     console.log("in save-settings: settings = ", settings);
     ({ apiKey, modelName, baseUrl } = settings);
-    let encryptedApiKey;
+    let apiKeyToStore;
+    let isEncrypted = false;
+    
     if (safeStorage.isEncryptionAvailable()) {
-        encryptedApiKey = safeStorage.encryptString(apiKey).toString('base64');
+        try {
+            apiKeyToStore = safeStorage.encryptString(apiKey).toString('base64');
+            isEncrypted = true;
+            console.log('API key encrypted successfully');
+        } catch (error) {
+            console.error('Encryption failed:', error);
+            apiKeyToStore = apiKey; // Fallback to unencrypted
+            isEncrypted = false;
+        }
     } else {
-        console.error('Encryption is not available on this system.');
-        return;
+        console.warn('Encryption is not available on this system. Storing API key unencrypted.');
+        apiKeyToStore = apiKey;
+        isEncrypted = false;
     }
+    
     const userSettings = {
-        apiKey: encryptedApiKey,
+        apiKey: apiKeyToStore,
         modelName,
-        baseUrl
+        baseUrl,
+        isEncrypted
     };
-    fs.writeFileSync(getSettingsFilePath(), JSON.stringify(userSettings));
-    mainWin.webContents.send('settings-loaded', settings);
-    openai = new OpenAI({apiKey: apiKey, baseURL: baseUrl});
+    
+    try {
+        fs.writeFileSync(getSettingsFilePath(), JSON.stringify(userSettings));
+        console.log('Settings saved successfully');
+        mainWin.webContents.send('settings-loaded', settings);
+        openai = new OpenAI({apiKey: apiKey, baseURL: baseUrl});
+    } catch (error) {
+        console.error('Failed to save settings:', error);
+    }
 });
 
 function loadSettings() {
     const settingsFilePath = getSettingsFilePath();
     if (fs.existsSync(settingsFilePath)) {
-        const data = fs.readFileSync(settingsFilePath);
-        const userSettings = JSON.parse(data);
-        // Decrypt the API key
-        let decryptedApiKey;
-        if (safeStorage.isEncryptionAvailable()) {
-            const encryptedBuffer = Buffer.from(userSettings.apiKey, 'base64');
-            decryptedApiKey = safeStorage.decryptString(encryptedBuffer);
-        } else {
-            console.error('Decryption is not available on this system.');
+        try {
+            const data = fs.readFileSync(settingsFilePath);
+            const userSettings = JSON.parse(data);
+            
+            let decryptedApiKey;
+            
+            // Check if the stored API key is encrypted
+            if (userSettings.isEncrypted === true) {
+                if (safeStorage.isEncryptionAvailable()) {
+                    try {
+                        const encryptedBuffer = Buffer.from(userSettings.apiKey, 'base64');
+                        decryptedApiKey = safeStorage.decryptString(encryptedBuffer);
+                        console.log('API key decrypted successfully');
+                    } catch (error) {
+                        console.error('Decryption failed:', error);
+                        return null;
+                    }
+                } else {
+                    console.error('Cannot decrypt API key: encryption is not available on this system.');
+                    return null;
+                }
+            } else {
+                // API key is stored unencrypted
+                decryptedApiKey = userSettings.apiKey;
+                console.log('Loaded unencrypted API key');
+            }
+            
+            return {
+                apiKey: decryptedApiKey,
+                modelName: userSettings.modelName,
+                baseUrl: userSettings.baseUrl
+            };
+        } catch (error) {
+            console.error('Failed to load settings:', error);
             return null;
         }
-        return {
-            apiKey: decryptedApiKey,
-            modelName: userSettings.modelName,
-            baseUrl: userSettings.baseUrl
-        };
     } else {
         console.log('No settings file found.');
         return null;
