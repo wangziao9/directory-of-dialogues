@@ -10,7 +10,7 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-zip',
-      platforms: ['win32', 'linux'],
+      platforms: ['win32'],
     },
     {
       name: '@electron-forge/maker-dmg',
@@ -20,11 +20,11 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
+      platforms: ['linux'],
     },
     {
-      name: '@electron-forge/maker-rpm',
-      config: {},
+      name: '@electron-forge/maker-flatpak',
+      platforms: ['linux'],
     },
   ],
   plugins: [

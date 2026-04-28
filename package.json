@@ -1,6 +1,6 @@
 {
   "name": "one-chat",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Manage your Chat Sessions in a Directory",
   "main": "main.js",
   "scripts": {
@@ -12,21 +12,20 @@
   "author": "Ziao Wang",
   "license": "ISC",
   "dependencies": {
-    "dotenv": "^8.6.0",
+    "dotenv": "^17.4.2",
     "electron-squirrel-startup": "^1.0.1",
-    "marked": "^15.0.6",
-    "openai": "^4.67.3"
+    "marked": "^18.0.2",
+    "openai": "^6.34.0"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.5.0",
-    "@electron-forge/maker-deb": "^7.5.0",
-    "@electron-forge/maker-dmg": "^7.8.1",
-    "@electron-forge/maker-rpm": "^7.5.0",
-    "@electron-forge/maker-squirrel": "^7.5.0",
-    "@electron-forge/maker-zip": "^7.6.1",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
-    "@electron-forge/plugin-fuses": "^7.5.0",
-    "@electron/fuses": "^1.8.0",
-    "electron": "^32.2.2"
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-dmg": "^7.11.1",
+    "@electron-forge/maker-deb": "^7.11.1",
+    "@electron-forge/maker-flatpak": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
+    "@electron-forge/plugin-fuses": "^7.11.1",
+    "electron": "^41.3.0"
   }
 }

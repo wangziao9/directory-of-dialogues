@@ -10,8 +10,9 @@ Before you start chatting, you'll need to provide the API key, base url and mode
 
 - Example base-url: https://api.openai.com/v1/
 - Example model-name: gpt-4o
+- Supports any OpenAI compatible API
 
-Note that the API key, base url and model name are stored on your platform. For example on Windows, they might be stored in `C:\Users\<Username>\AppData\Roaming\one-chat\user-settings.json`. Please take note of this to avoid leaking your API key.
+Note that the API key, base url and model name are stored on your platform. For example `~/.config/one-chat/user-setting.json` on Linux or `C:\Users\<Username>\AppData\Roaming\one-chat\user-settings.json` on Windows. Please take note of this to avoid leaking your API key.
 
 ### Features
 
@@ -37,9 +38,3 @@ Save your chat sessions as a JSON file in the directory tree
 1. `npm install`
 2. `npm run make`
 3. the packaged application is in the out/ folder
-
-## Next Steps
-
-1. Let users add their own API key. (Done)
-2. Handle errors from OpenAI API. (Done)
-3. Support the app on Linux platforms.
