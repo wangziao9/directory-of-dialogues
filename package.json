@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "description": "Manage your Chat Sessions in a Directory",
   "main": "main.js",
+  "engines": {
+    "node": ">=20.0.0 <23.0.0"
+  },
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",

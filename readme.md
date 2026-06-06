@@ -30,11 +30,13 @@ Save your chat sessions as a JSON file in the directory tree
 
 ## Running the application from source
 
+0. `nvm use`
 1. `npm install`
 2. `npm start`
 
 ## Packaging the project as a desktop application
 
+0. `nvm use`
 1. `npm install`
 2. `npm run make`
 3. the packaged application is in the out/ folder
